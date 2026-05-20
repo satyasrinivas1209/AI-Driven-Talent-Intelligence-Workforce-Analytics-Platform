@@ -4,8 +4,8 @@ const multer = require('multer');
 const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
-const Resume = require('../models-mysql/Resume');
-const Job = require('../models-mysql/Job');
+const Resume = require('../models/Resume');
+const Job = require('../models/Job');
 
 const upload = multer({ dest: 'uploads/' });
 
@@ -14,14 +14,13 @@ router.post('/upload', upload.single('resume'), async (req, res) => {
     const { candidateName, email, phone, jobId } = req.body;
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
 
-    // Assuming we have one active job or it's passed
-    let jobTitle = "General";
+    let jobTitle = 'General';
     let requiredSkills = [];
     if (jobId) {
-      const job = await Job.findByPk(jobId);
+      const job = await Job.findById(jobId);
       if (job) {
         jobTitle = job.title;
-        requiredSkills = job.requiredSkills;
+        requiredSkills = job.requiredSkills || [];
       }
     }
 
@@ -30,14 +29,15 @@ router.post('/upload', upload.single('resume'), async (req, res) => {
     form.append('jobTitle', jobTitle);
     form.append('requiredSkills', requiredSkills.join(','));
 
-    // Send to Python ML Service
-    const mlResponse = await axios.post('http://127.0.0.1:5001/parse', form, {
-      headers: {
-        ...form.getHeaders(),
-      },
-    });
-
-    const { skills, experience, education, matchScore } = mlResponse.data;
+    let skills = [], experience = 'Fresher', education = 'N/A', matchScore = 0;
+    try {
+      const mlResponse = await axios.post('http://127.0.0.1:5001/parse', form, {
+        headers: { ...form.getHeaders() },
+      });
+      ({ skills, experience, education, matchScore } = mlResponse.data);
+    } catch (mlErr) {
+      console.warn('ML service unavailable, saving with defaults.');
+    }
 
     const resume = await Resume.create({
       candidateName,
@@ -49,24 +49,33 @@ router.post('/upload', upload.single('resume'), async (req, res) => {
       filePath: req.file.path,
       matchScore: matchScore || 0,
     });
-    
-    // Clean up
-    fs.unlinkSync(req.file.path);
+
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
 
     res.json({ message: 'Resume uploaded successfully', resume });
   } catch (error) {
     console.error(error);
-    if(req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-    res.status(500).send('Error parsing resume');
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    res.status(500).json({ error: 'Error parsing resume' });
   }
 });
 
 router.get('/', async (req, res) => {
   try {
-    const resumes = await Resume.findAll({ order: [['matchScore', 'DESC']] });
+    const resumes = await Resume.find().sort({ matchScore: -1 });
     res.json(resumes);
   } catch (error) {
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+router.patch('/:id/status', async (req, res) => {
+  try {
+    const { status } = req.body;
+    const resume = await Resume.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    res.json(resume);
+  } catch (error) {
+    res.status(500).json({ error: 'Server Error' });
   }
 });
 

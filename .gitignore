@@ -6,3 +6,4 @@ venv/
 .env
 dist/
 build/
+backend/config/gmail_tokens.json

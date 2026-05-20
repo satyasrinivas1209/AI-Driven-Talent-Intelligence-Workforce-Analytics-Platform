@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models-mysql/User');
+const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
-    let user = await User.findOne({ where: { email } });
+    let user = await User.findOne({ email });
     if (user) return res.status(400).json({ message: 'User already exists' });
 
     const salt = await bcrypt.genSalt(10);
@@ -15,30 +15,32 @@ router.post('/register', async (req, res) => {
 
     user = await User.create({ name, email, password: hashedPassword, role });
 
-    const payload = { user: { id: user.id, role: user.role } };
+    const payload = { user: { id: user._id, role: user.role } };
     const token = jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
 
-    res.json({ token, user: { id: user.id, name, email, role } });
+    res.json({ token, user: { id: user._id, name, email, role } });
   } catch (err) {
-    res.status(500).send('Server Error');
+    console.error(err);
+    res.status(500).json({ error: 'Server Error' });
   }
 });
 
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ where: { email } });
+    const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: 'Invalid Credentials' });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid Credentials' });
 
-    const payload = { user: { id: user.id, role: user.role } };
+    const payload = { user: { id: user._id, role: user.role } };
     const token = jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
 
-    res.json({ token, user: { id: user.id, name: user.name, email, role: user.role } });
+    res.json({ token, user: { id: user._id, name: user.name, email, role: user.role } });
   } catch (err) {
-    res.status(500).send('Server Error');
+    console.error(err);
+    res.status(500).json({ error: 'Server Error' });
   }
 });
 

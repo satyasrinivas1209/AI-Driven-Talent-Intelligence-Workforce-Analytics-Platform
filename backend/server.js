@@ -10,6 +10,7 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/resume', require('./routes/resume'));
 app.use('/api/hr', require('./routes/hr'));
+app.use('/api/email', require('./routes/email'));
 
 const { connectDB } = require('./config/db');
 

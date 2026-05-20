@@ -1,0 +1,23 @@
+﻿[dotenv@17.3.1] injecting env (3) from .env -- tip: ΓÜÖ∩╕Å  enable debug logging with { debug: true }
+node : FAIL: querySrv 
+ECONNREFUSED _mongodb._tc
+p.cluster0.dg2ftjv.mongod
+b.net
+At line:1 char:1
++ node -e "require('doten
+v').config(); const 
+m=require('mongoose'); 
+m.c ...
++ ~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo       
+       : NotSpecified:   
+  (FAIL: querySrv ...t   
+ jv.mongodb.net:Strin    
+g) [], RemoteExcepti    
+on
+    + FullyQualifiedErro 
+   rId : NativeCommandE  
+  rror
+ 
