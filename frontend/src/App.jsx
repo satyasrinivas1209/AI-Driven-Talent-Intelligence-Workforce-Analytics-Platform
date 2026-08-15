@@ -8,6 +8,7 @@ import AttritionPred from './pages/AttritionPred';
 import Login from './pages/Login';
 import Topbar from './components/Topbar';
 import EmailApplications from './pages/EmailApplications';
+import Jobs from './pages/Jobs';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
               <Route path="/login" element={!isLoggedIn ? <Login /> : <Navigate to="/" />} />
               <Route path="/" element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" />} />
               <Route path="/upload" element={isLoggedIn ? <UploadResume /> : <Navigate to="/login" />} />
+              <Route path="/jobs" element={isLoggedIn ? <Jobs /> : <Navigate to="/login" />} />
               <Route path="/candidates" element={isLoggedIn ? <Candidates /> : <Navigate to="/login" />} />
               <Route path="/attrition" element={isLoggedIn ? <AttritionPred /> : <Navigate to="/login" />} />
               <Route path="/email-applications" element={isLoggedIn ? <EmailApplications /> : <Navigate to="/login" />} />

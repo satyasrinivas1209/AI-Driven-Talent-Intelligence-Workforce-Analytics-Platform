@@ -7,6 +7,11 @@ const Candidates = () => {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // Filtering & Sorting State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('All');
+  const [sortBy, setSortBy] = useState('score_desc');
 
   useEffect(() => {
     const fetchCandidates = async () => {
@@ -28,19 +33,86 @@ const Candidates = () => {
     fetchCandidates();
   }, []);
 
+  const updateStatus = async (status) => {
+    const isDestructive = status === 'Rejected';
+    if (!window.confirm(`Are you sure you want to mark this candidate as ${status}?${isDestructive ? ' This action cannot be easily undone.' : ''}`)) {
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      await axios.patch(`${import.meta.env.VITE_API_URL}/resume/${selectedCandidate._id}/status`, { status }, { headers: { 'x-auth-token': token } });
+      
+      const updatedCandidate = { ...selectedCandidate, status };
+      setSelectedCandidate(updatedCandidate);
+      setCandidates(candidates.map(c => c._id === updatedCandidate._id ? updatedCandidate : c));
+    } catch (err) {
+      alert('Failed to update status: ' + (err.response?.data?.error || err.message));
+    }
+  };
+
   if (loading) return <div style={{ padding: '2rem 4rem', fontSize: '1.2rem' }}>Loading candidates...</div>;
   if (error) return <div style={{ padding: '2rem 4rem', color: 'red' }}>{error}</div>;
 
+  // Apply filters and sort
+  let filteredCandidates = candidates.filter(c => {
+    const matchesSearch = c.candidateName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          c.skills?.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesStatus = filterStatus === 'All' || (c.status || 'Applied') === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
+
+  filteredCandidates.sort((a, b) => {
+    if (sortBy === 'score_desc') return (b.matchScore || 0) - (a.matchScore || 0);
+    if (sortBy === 'score_asc') return (a.matchScore || 0) - (b.matchScore || 0);
+    if (sortBy === 'name_asc') return (a.candidateName || '').localeCompare(b.candidateName || '');
+    return 0;
+  });
+
   return (
-    <div style={{ padding: '2rem 4rem', background: '#f8fafc', minHeight: '100vh', fontFamily: '"Inter", sans-serif', display: 'flex', gap: '2rem' }}>
+    <div style={{ padding: '2rem 4rem', background: 'var(--bg-color)', minHeight: '100vh', fontFamily: '"Inter", sans-serif', display: 'flex', gap: '2rem' }}>
       
       {/* LEFT SIDEBAR: List of Candidates */}
-      <div style={{ width: '300px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '1rem', height: 'calc(100vh - 4rem)', overflowY: 'auto' }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1e293b', marginBottom: '1rem' }}>Talent Pool</h2>
-        {candidates.length === 0 ? (
-          <p style={{ color: '#64748b' }}>No candidates found.</p>
+      <div style={{ width: '320px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '1rem', height: 'calc(100vh - 4rem)', overflowY: 'auto', paddingRight: '10px' }}>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Talent Pool</h2>
+        
+        {/* Controls */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+          <input 
+            type="text" 
+            placeholder="Search name or skills..." 
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--bg-color-card)', color: 'var(--text-primary)' }}
+          />
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <select 
+              value={filterStatus} 
+              onChange={e => setFilterStatus(e.target.value)}
+              style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--bg-color-card)', color: 'var(--text-primary)' }}
+            >
+              <option value="All">All Status</option>
+              <option value="Applied">Applied</option>
+              <option value="Shortlisted">Shortlisted</option>
+              <option value="Interviewing">Interviewing</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+            <select 
+              value={sortBy} 
+              onChange={e => setSortBy(e.target.value)}
+              style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--bg-color-card)', color: 'var(--text-primary)' }}
+            >
+              <option value="score_desc">Highest Score</option>
+              <option value="score_asc">Lowest Score</option>
+              <option value="name_asc">Name (A-Z)</option>
+            </select>
+          </div>
+        </div>
+
+        {filteredCandidates.length === 0 ? (
+          <p style={{ color: 'var(--text-secondary)' }}>No candidates match criteria.</p>
         ) : (
-          candidates.map(c => (
+          filteredCandidates.map(c => (
             <div 
               key={c._id} 
               onClick={() => setSelectedCandidate(c)}
@@ -78,8 +150,9 @@ const Candidates = () => {
                 <p style={{ fontSize: '1.1rem', color: '#64748b' }}>{selectedCandidate.email} • {selectedCandidate.phone}</p>
               </div>
               <div style={{ display: 'flex', gap: '1rem' }}>
-                <button style={{ background: 'white', border: '1px solid #e2e8f0', padding: '0.75rem 2rem', borderRadius: '0.75rem', fontWeight: 800, color: '#1e293b' }}>Shortlist</button>
-                <button style={{ background: '#151e5e', color: 'white', border: 'none', padding: '0.75rem 2.5rem', borderRadius: '0.75rem', fontWeight: 800 }}>Schedule Interview</button>
+                <button onClick={() => updateStatus('Rejected')} style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '0.75rem 2rem', borderRadius: '0.75rem', fontWeight: 800, color: '#ef4444', cursor: 'pointer' }}>Reject</button>
+                <button onClick={() => updateStatus('Shortlisted')} style={{ background: 'white', border: '1px solid #e2e8f0', padding: '0.75rem 2rem', borderRadius: '0.75rem', fontWeight: 800, color: '#1e293b', cursor: 'pointer' }}>Shortlist</button>
+                <button onClick={() => updateStatus('Interviewing')} style={{ background: '#151e5e', color: 'white', border: 'none', padding: '0.75rem 2.5rem', borderRadius: '0.75rem', fontWeight: 800, cursor: 'pointer' }}>Schedule Interview</button>
               </div>
             </div>
 

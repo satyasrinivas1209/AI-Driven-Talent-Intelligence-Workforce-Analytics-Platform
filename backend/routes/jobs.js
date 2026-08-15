@@ -38,10 +38,48 @@ const seedJobsIfEmpty = async () => {
 router.get('/', auth, async (req, res) => {
   try {
     await seedJobsIfEmpty();
-    const jobs = await Job.find({ isActive: true });
+    // Return all jobs, including inactive ones for the management UI
+    const jobs = await Job.find().sort({ createdAt: -1 });
     res.json(jobs);
   } catch (error) {
     console.error('Error fetching jobs:', error);
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+router.post('/', auth, async (req, res) => {
+  try {
+    const { title, description, requiredSkills, isActive } = req.body;
+    const newJob = new Job({ title, description, requiredSkills, isActive });
+    await newJob.save();
+    res.json(newJob);
+  } catch (error) {
+    console.error('Error creating job:', error);
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const { title, description, requiredSkills, isActive } = req.body;
+    const updatedJob = await Job.findByIdAndUpdate(
+      req.params.id,
+      { title, description, requiredSkills, isActive },
+      { new: true }
+    );
+    res.json(updatedJob);
+  } catch (error) {
+    console.error('Error updating job:', error);
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    await Job.findByIdAndDelete(req.params.id);
+    res.json({ msg: 'Job deleted' });
+  } catch (error) {
+    console.error('Error deleting job:', error);
     res.status(500).json({ error: 'Server Error' });
   }
 });
