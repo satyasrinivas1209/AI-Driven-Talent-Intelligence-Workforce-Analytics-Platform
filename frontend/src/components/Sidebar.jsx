@@ -1,12 +1,14 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, UserPlus, TrendingDown, LogOut, Settings, BarChart2, Mail } from 'lucide-react';
+import { LayoutDashboard, Users, UserPlus, TrendingDown, LogOut, Settings, BarChart2, Mail, Briefcase } from 'lucide-react';
 
 const Sidebar = () => {
   const location = useLocation();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    window.location.href = '/login';
+    if (window.confirm("Are you sure you want to log out?")) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
   };
 
   return (
@@ -24,6 +26,9 @@ const Sidebar = () => {
         <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1.5rem', paddingLeft: '1rem' }}>Principal</p>
         <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}>
           <LayoutDashboard size={20} /> Dashboard
+        </Link>
+        <Link to="/jobs" className={`nav-link ${location.pathname === '/jobs' ? 'active' : ''}`}>
+          <Briefcase size={20} /> Job Postings
         </Link>
         <Link to="/candidates" className={`nav-link ${location.pathname === '/candidates' ? 'active' : ''}`}>
           <BarChart2 size={20} /> Talent Ranking

@@ -1,14 +1,27 @@
+import { useState } from 'react';
 import { Bell, Search, UserCircle } from 'lucide-react';
 
 const Topbar = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (e) => {
+    if (e.key === 'Enter' && searchQuery.trim() !== '') {
+      alert(`Search results for "${searchQuery}" will be implemented in a future update.`);
+      setSearchQuery('');
+    }
+  };
+
   return (
     <div className="header" style={{ background: 'var(--bg-color-card)', padding: '1rem 2rem', borderRadius: '12px', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: '300px' }}>
         <Search size={20} color="var(--text-secondary)" />
         <input
           type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={handleSearch}
           placeholder="Search candidates, jobs..."
-          style={{ margin: 0, padding: '0.5rem', background: 'transparent', border: 'none', color: 'white' }}
+          style={{ margin: 0, padding: '0.5rem', background: 'transparent', border: 'none', color: 'white', width: '100%', outline: 'none' }}
         />
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
