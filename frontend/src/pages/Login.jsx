@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { User, Lock, ExternalLink } from 'lucide-react';
+import { User, Lock, ExternalLink, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
@@ -47,12 +48,18 @@ const Login = () => {
           <div style={{ position: 'relative', marginBottom: '2rem' }}>
             <Lock size={18} color="var(--text-secondary)" style={{ position: 'absolute', left: 14, top: 16 }} />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              style={{ paddingLeft: '2.5rem' }}
+              style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
             />
+            <div 
+              style={{ position: 'absolute', right: 14, top: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <EyeOff size={18} color="var(--text-secondary)" /> : <Eye size={18} color="var(--text-secondary)" />}
+            </div>
           </div>
 
           <button type="submit" className="btn" style={{ width: '100%' }} disabled={loading}>
