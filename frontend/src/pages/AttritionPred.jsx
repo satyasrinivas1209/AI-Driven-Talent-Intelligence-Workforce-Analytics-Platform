@@ -22,9 +22,7 @@ const AttritionPred = () => {
     setLoading(true);
     setResult(null);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/hr/predict-attrition`, formData, {
-        headers: { 'x-auth-token': localStorage.getItem('token') }
-      });
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/hr/predict-attrition`, formData);
       setResult(res.data);
     } catch (err) {
       console.error('Prediction failed:', err);
