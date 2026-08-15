@@ -91,7 +91,7 @@ router.get('/', auth, async (req, res) => {
 router.patch('/:id/status', auth, checkRole(['HR', 'Admin']), async (req, res) => {
   try {
     const { status } = req.body;
-    const resume = await Resume.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    const resume = await Resume.findByIdAndUpdate(req.params.id, { status }, { returnDocument: 'after' });
     res.json(resume);
   } catch (error) {
     res.status(500).json({ error: 'Server Error' });

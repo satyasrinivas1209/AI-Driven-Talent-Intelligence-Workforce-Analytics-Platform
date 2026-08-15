@@ -65,7 +65,7 @@ router.put('/:id', auth, async (req, res) => {
     const updatedJob = await Job.findByIdAndUpdate(
       req.params.id,
       { title, description, requiredSkills, isActive },
-      { new: true }
+      { returnDocument: 'after' }
     );
     res.json(updatedJob);
   } catch (error) {
