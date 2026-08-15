@@ -1,61 +1,89 @@
 import { useEffect, useState } from 'react';
-import { Bar, Doughnut, Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement, Filler } from 'chart.js';
+import axios from 'axios';
+import { Bar, Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import { Users, TrendingDown, Target, Zap } from 'lucide-react';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement, Filler);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
-    totalCandidates: 142,
-    shortlisted: 45,
+    totalCandidates: 0,
+    shortlisted: 0,
     attritionRate: '12%',
     predictions: 18
   });
+  
+  const [matchScoreData, setMatchScoreData] = useState(null);
+  const [statusData, setStatusData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data for charts
-  const hiringData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    datasets: [
-      {
-        label: 'Candidates Applied',
-        data: [65, 59, 80, 81, 56, 142],
-        backgroundColor: 'rgba(88, 166, 255, 0.8)',
-        borderRadius: 4
-      },
-      {
-        label: 'Hired',
-        data: [12, 19, 15, 22, 14, 30],
-        backgroundColor: 'rgba(46, 160, 67, 0.8)',
-        borderRadius: 4
-      }
-    ]
-  };
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/resume`, {
+          headers: { 'x-auth-token': token }
+        });
+        
+        const resumes = res.data;
+        const total = resumes.length;
+        const shortlisted = resumes.filter(r => r.status === 'Shortlisted').length;
+        
+        setStats(prev => ({
+          ...prev,
+          totalCandidates: total,
+          shortlisted: shortlisted
+        }));
 
-  const attritionData = {
-    labels: ['Resigned', 'Retained'],
-    datasets: [
-      {
-        data: [12, 88],
-        backgroundColor: ['rgba(248, 81, 73, 0.8)', 'rgba(46, 160, 67, 0.8)'],
-        borderWidth: 0,
-      }
-    ]
-  };
+        // Calculate Match Score Distribution
+        const scoreRanges = { '0-20': 0, '21-40': 0, '41-60': 0, '61-80': 0, '81-100': 0 };
+        resumes.forEach(r => {
+          const s = r.matchScore || 0;
+          if (s <= 20) scoreRanges['0-20']++;
+          else if (s <= 40) scoreRanges['21-40']++;
+          else if (s <= 60) scoreRanges['41-60']++;
+          else if (s <= 80) scoreRanges['61-80']++;
+          else scoreRanges['81-100']++;
+        });
 
-  const performanceData = {
-    labels: ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance'],
-    datasets: [
-      {
-        label: 'Avg Performance Score/10',
-        data: [8.5, 7.2, 8.8, 8.0, 9.1],
-        borderColor: '#58a6ff',
-        backgroundColor: 'rgba(88, 166, 255, 0.1)',
-        tension: 0.4,
-        fill: true,
+        setMatchScoreData({
+          labels: Object.keys(scoreRanges),
+          datasets: [{
+            label: 'Number of Candidates',
+            data: Object.values(scoreRanges),
+            backgroundColor: 'rgba(88, 166, 255, 0.8)',
+            borderRadius: 4
+          }]
+        });
+
+        // Calculate Status Distribution
+        const statuses = {};
+        resumes.forEach(r => {
+          const st = r.status || 'Applied';
+          statuses[st] = (statuses[st] || 0) + 1;
+        });
+
+        const bgColors = ['rgba(88, 166, 255, 0.8)', 'rgba(46, 160, 67, 0.8)', 'rgba(248, 81, 73, 0.8)', 'rgba(210, 153, 34, 0.8)'];
+
+        setStatusData({
+          labels: Object.keys(statuses),
+          datasets: [{
+            data: Object.values(statuses),
+            backgroundColor: Object.keys(statuses).map((_, i) => bgColors[i % bgColors.length]),
+            borderWidth: 0,
+          }]
+        });
+
+        setLoading(false);
+      } catch (err) {
+        console.error('Failed to fetch dashboard data', err);
+        setLoading(false);
       }
-    ]
-  };
+    };
+
+    fetchDashboardData();
+  }, []);
 
   const options = {
     responsive: true,
@@ -79,6 +107,8 @@ const Dashboard = () => {
     cutout: '70%'
   };
 
+  if (loading) return <div style={{ padding: '2rem 4rem', fontSize: '1.2rem' }}>Loading dashboard...</div>;
+
   return (
     <div>
       <div className="header">
@@ -99,9 +129,6 @@ const Dashboard = () => {
               <Users color="var(--accent-color)" size={24} />
             </div>
           </div>
-          <div style={{ marginTop: '1rem', color: 'var(--success-color)', fontSize: '0.85rem', fontWeight: 600 }}>
-            +24% from last month
-          </div>
         </div>
 
         <div className="glass-card fade-in" style={{ animationDelay: '0.2s' }}>
@@ -115,7 +142,7 @@ const Dashboard = () => {
             </div>
           </div>
           <div style={{ marginTop: '1rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-            31% acceptance rate
+            {stats.totalCandidates > 0 ? Math.round((stats.shortlisted / stats.totalCandidates) * 100) : 0}% acceptance rate
           </div>
         </div>
 
@@ -129,8 +156,8 @@ const Dashboard = () => {
               <TrendingDown color="var(--danger-color)" size={24} />
             </div>
           </div>
-          <div style={{ marginTop: '1rem', color: 'var(--danger-color)', fontSize: '0.85rem', fontWeight: 600 }}>
-            Warning: Up 2%
+          <div style={{ marginTop: '1rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+            (Mock Data)
           </div>
         </div>
 
@@ -145,30 +172,23 @@ const Dashboard = () => {
             </div>
           </div>
           <div style={{ marginTop: '1rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-            Across 5 models
+            (Mock Data)
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-3">
-        <div className="glass-card fade-in" style={{ gridColumn: 'span 2', height: '400px' }}>
-          <h3 style={{ marginBottom: '1.5rem', fontWeight: 600 }}>Hiring Pipeline Analytics & Match Score</h3>
+      <div className="grid grid-cols-2">
+        <div className="glass-card fade-in" style={{ height: '400px' }}>
+          <h3 style={{ marginBottom: '1.5rem', fontWeight: 600 }}>Candidate Match Score Distribution</h3>
           <div style={{ height: '300px' }}>
-            <Bar data={hiringData} options={options} />
+            {matchScoreData && <Bar data={matchScoreData} options={options} />}
           </div>
         </div>
 
         <div className="glass-card fade-in" style={{ height: '400px' }}>
-          <h3 style={{ marginBottom: '1.5rem', fontWeight: 600 }}>Workforce Attrition Risk</h3>
+          <h3 style={{ marginBottom: '1.5rem', fontWeight: 600 }}>Candidate Status Distribution</h3>
           <div style={{ height: '300px' }}>
-            <Doughnut data={attritionData} options={doughnutOptions} />
-          </div>
-        </div>
-
-        <div className="glass-card fade-in" style={{ gridColumn: 'span 3', height: '400px' }}>
-          <h3 style={{ marginBottom: '1.5rem', fontWeight: 600 }}>Departmental Performance Prediction (Regression)</h3>
-          <div style={{ height: '300px' }}>
-            <Line data={performanceData} options={options} />
+            {statusData && <Doughnut data={statusData} options={doughnutOptions} />}
           </div>
         </div>
       </div>

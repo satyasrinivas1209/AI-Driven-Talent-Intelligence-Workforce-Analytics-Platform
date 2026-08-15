@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { UploadCloud, FileText, CheckCircle, AlertCircle, Target } from 'lucide-react';
 
@@ -7,9 +7,29 @@ const UploadResume = () => {
   const [candidateName, setCandidateName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [jobs, setJobs] = useState([]);
+  const [jobId, setJobId] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/jobs`, {
+          headers: { 'x-auth-token': localStorage.getItem('token') }
+        });
+        setJobs(res.data);
+        if (res.data.length > 0) {
+          setJobId(res.data[0]._id);
+        }
+      } catch (err) {
+        console.error('Failed to fetch jobs', err);
+      }
+    };
+    fetchJobs();
+  }, []);
 
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -23,10 +43,11 @@ const UploadResume = () => {
     formData.append('candidateName', candidateName);
     formData.append('email', email);
     formData.append('phone', phone);
+    if (jobId) formData.append('jobId', jobId);
     
     try {
       // Backend handles forwarding to ML API
-      const res = await axios.post('http://localhost:5000/api/resume/upload', formData, {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/resume/upload`, formData, {
         headers: { 
           'Content-Type': 'multipart/form-data',
           'x-auth-token': localStorage.getItem('token')
@@ -58,6 +79,15 @@ const UploadResume = () => {
           <h2 style={{fontSize: '1.25rem', marginBottom: '1.5rem', fontWeight: 600}}>Upload New Resume</h2>
           
           <form onSubmit={handleUpload}>
+            <div style={{marginBottom: '1rem'}}>
+              <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)'}}>Target Job Role</label>
+              <select value={jobId} onChange={e => setJobId(e.target.value)} required style={{width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(13, 17, 23, 0.5)', color: 'white'}}>
+                {jobs.map(j => (
+                  <option key={j._id} value={j._id}>{j.title}</option>
+                ))}
+              </select>
+            </div>
+
             <div style={{marginBottom: '1rem'}}>
               <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)'}}>Candidate Name</label>
               <input type="text" value={candidateName} onChange={e => setCandidateName(e.target.value)} required />

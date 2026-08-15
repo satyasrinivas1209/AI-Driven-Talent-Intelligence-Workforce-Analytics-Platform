@@ -22,20 +22,18 @@ const AttritionPred = () => {
     setLoading(true);
     setResult(null);
     try {
-      const res = await axios.post('http://localhost:5000/api/hr/predict-attrition', formData, {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/hr/predict-attrition`, formData, {
         headers: { 'x-auth-token': localStorage.getItem('token') }
       });
       setResult(res.data);
     } catch (err) {
-      console.log('Using mock attrition prediction for demo.');
-      setTimeout(() => {
-        setResult({
-          attrition: formData.JobSatisfaction <= 2 || formData.YearsAtCompany > 5 ? 'Yes' : 'No',
-          probability: formData.JobSatisfaction <= 2 ? 82.5 : 15.4,
-          explanation: "Predicted using Random Forest based on Age, Income, Experience, and Satisfaction."
-        });
-        setLoading(false);
-      }, 1000);
+      console.error('Prediction failed:', err);
+      const errorMsg = err.response?.data?.error || err.message || 'Unknown error occurred.';
+      setResult({
+        attrition: 'Error',
+        probability: 0,
+        explanation: `Backend Error: ${errorMsg}. Ensure the ML service is running.`
+      });
     } finally {
       setLoading(false);
     }
@@ -105,6 +103,10 @@ const AttritionPred = () => {
                   <div style={{padding: '1rem', background: 'rgba(248, 81, 73, 0.1)', borderRadius: '50%'}}>
                     <ShieldAlert color="var(--danger-color)" size={32} />
                   </div>
+                ) : result.attrition === 'Error' ? (
+                  <div style={{padding: '1rem', background: 'rgba(210, 153, 34, 0.1)', borderRadius: '50%'}}>
+                    <ShieldAlert color="#d29922" size={32} />
+                  </div>
                 ) : (
                   <div style={{padding: '1rem', background: 'rgba(46, 160, 67, 0.1)', borderRadius: '50%'}}>
                     <Users color="var(--success-color)" size={32} />
@@ -112,22 +114,22 @@ const AttritionPred = () => {
                 )}
                 <div>
                   <h2 style={{fontSize: '1.25rem', fontWeight: 600}}>Attrition Prediction</h2>
-                  <p style={{color: result.attrition === 'Yes' ? 'var(--danger-color)' : 'var(--success-color)', fontWeight: 600}}>
-                    {result.attrition === 'Yes' ? 'High Risk - Likely to Leave' : 'Low Risk - Employee Retained'}
+                  <p style={{color: result.attrition === 'Yes' ? 'var(--danger-color)' : result.attrition === 'Error' ? '#d29922' : 'var(--success-color)', fontWeight: 600}}>
+                    {result.attrition === 'Yes' ? 'High Risk - Likely to Leave' : result.attrition === 'Error' ? 'Analysis Failed' : 'Low Risk - Employee Retained'}
                   </p>
                 </div>
               </div>
 
-              <div style={{background: 'rgba(13, 17, 23, 0.5)', padding: '1.5rem', borderRadius: '12px', marginBottom: '1.5rem'}}>
+              <div style={{background: 'rgba(13, 17, 23, 0.5)', padding: '1.5rem', borderRadius: '12px', marginBottom: '1.5rem', opacity: result.attrition === 'Error' ? 0.5 : 1}}>
                 <p style={{fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem'}}>Flight Risk Probability</p>
                 <div style={{display: 'flex', alignItems: 'flex-end', gap: '0.5rem', marginBottom: '1rem'}}>
-                  <span style={{fontSize: '3rem', fontWeight: 800, lineHeight: 1, color: result.attrition === 'Yes' ? 'var(--danger-color)' : 'var(--success-color)'}}>
+                  <span style={{fontSize: '3rem', fontWeight: 800, lineHeight: 1, color: result.attrition === 'Yes' ? 'var(--danger-color)' : result.attrition === 'Error' ? '#d29922' : 'var(--success-color)'}}>
                     {result.probability}%
                   </span>
                 </div>
                 
                 <div style={{width: '100%', height: 8, background: 'rgba(255,255,255,0.05)', borderRadius: 4, overflow: 'hidden'}}>
-                  <div style={{width: `${result.probability}%`, height: '100%', background: result.attrition === 'Yes' ? 'var(--danger-color)' : 'var(--success-color)', borderRadius: 4}}></div>
+                  <div style={{width: `${result.probability}%`, height: '100%', background: result.attrition === 'Yes' ? 'var(--danger-color)' : result.attrition === 'Error' ? '#d29922' : 'var(--success-color)', borderRadius: 4}}></div>
                 </div>
               </div>
 

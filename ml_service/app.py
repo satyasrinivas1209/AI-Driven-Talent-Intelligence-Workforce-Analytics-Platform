@@ -9,24 +9,18 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.ensemble import RandomForestClassifier
+import joblib
 
 app = Flask(__name__)
 CORS(app)
 
-# Dummy dataset for training Employee Attrition Model
-# usually use IBM HR dataset, simulating here
-data = pd.DataFrame({
-    'Age': np.random.randint(20, 60, 500),
-    'MonthlyIncome': np.random.randint(2000, 20000, 500),
-    'YearsAtCompany': np.random.randint(0, 40, 500),
-    'JobSatisfaction': np.random.randint(1, 5, 500),
-    'Attrition': np.random.choice([0, 1], 500, p=[0.8, 0.2])
-})
-X = data.drop('Attrition', axis=1)
-y = data['Attrition']
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'attrition_model.pkl')
 
-attrition_model = RandomForestClassifier(n_estimators=50, random_state=42)
-attrition_model.fit(X, y)
+if not os.path.exists(MODEL_PATH):
+    import train_model
+    train_model.train_and_save()
+
+attrition_model = joblib.load(MODEL_PATH)
 
 def parse_pdf(file_path):
     text = ""
@@ -47,6 +41,18 @@ def extract_skills(text):
     text_lower = text.lower()
     skills_found = [skill for skill in known_skills if skill in text_lower]
     return list(set(skills_found))
+
+def extract_experience(text):
+    match = re.search(r'\b(\d+)\+?\s*(?:years?|yrs?)\b', text, re.IGNORECASE)
+    if match:
+        return f"{match.group(1)} Years"
+    return "Not Found"
+
+def extract_education(text):
+    match = re.search(r'\b(?:B\.?Tech|M\.?Tech|B\.?S|M\.?S|Bachelor|Master|B\.?A|M\.?A|Ph\.?D|MBA)\b[^\n,]*', text, re.IGNORECASE)
+    if match:
+        return match.group(0).strip()
+    return "Not Found"
 
 @app.route('/parse', methods=['POST'])
 def parse_resume():
@@ -72,7 +78,12 @@ def parse_resume():
     text = parse_pdf(file_path)
     os.remove(file_path)
     
+    if not text or not text.strip():
+        return jsonify({"error": "Failed to extract text from PDF. The file might be image-based, corrupted, or empty."}), 400
+    
     skills = extract_skills(text)
+    experience = extract_experience(text)
+    education = extract_education(text)
     
     # Simple semantic similarity using TF-IDF
     required_skills = required_skills_str.split(',') if required_skills_str else ['react', 'node', 'mongodb', 'javascript']
@@ -97,8 +108,8 @@ def parse_resume():
     
     return jsonify({
         "skills": skills,
-        "experience": "2 Years (Extracted)", # Mock extraction
-        "education": "B.Tech Computer Science", # Mock extraction
+        "experience": experience,
+        "education": education,
         "matchScore": min(final_score, 100)
     })
 

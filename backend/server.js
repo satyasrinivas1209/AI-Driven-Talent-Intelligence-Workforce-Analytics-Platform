@@ -3,7 +3,10 @@ const express = require('express');
 const cors = require('cors');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes
@@ -11,6 +14,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/resume', require('./routes/resume'));
 app.use('/api/hr', require('./routes/hr'));
 app.use('/api/email', require('./routes/email'));
+app.use('/api/jobs', require('./routes/jobs'));
 
 const { connectDB } = require('./config/db');
 
