@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
 const FormData = require('form-data');
+const auth = require('../middleware/authMiddleware');
 
 // ─── Gmail OAuth2 Client ──────────────────────────────────────────────────────
 const oauth2Client = new google.auth.OAuth2(
@@ -14,7 +15,7 @@ const oauth2Client = new google.auth.OAuth2(
 );
 
 // ─── Step 1: Generate Auth URL ────────────────────────────────────────────────
-router.get('/auth', (req, res) => {
+router.get('/auth', auth, (req, res) => {
   const url = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: ['https://www.googleapis.com/auth/gmail.readonly'],
@@ -52,7 +53,7 @@ const loadTokens = () => {
 };
 
 // ─── Step 3: Fetch Emails with Attachments ────────────────────────────────────
-router.get('/fetch', async (req, res) => {
+router.get('/fetch', auth, async (req, res) => {
   try {
     if (!loadTokens()) {
       return res.status(401).json({
@@ -169,7 +170,7 @@ router.get('/fetch', async (req, res) => {
 });
 
 // ─── Step 4: Check connection status ─────────────────────────────────────────
-router.get('/status', (req, res) => {
+router.get('/status', auth, (req, res) => {
   const connected = loadTokens();
   res.json({
     connected,

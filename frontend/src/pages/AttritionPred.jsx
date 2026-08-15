@@ -22,7 +22,9 @@ const AttritionPred = () => {
     setLoading(true);
     setResult(null);
     try {
-      const res = await axios.post('http://localhost:5000/api/hr/predict-attrition', formData);
+      const res = await axios.post('http://localhost:5000/api/hr/predict-attrition', formData, {
+        headers: { 'x-auth-token': localStorage.getItem('token') }
+      });
       setResult(res.data);
     } catch (err) {
       console.log('Using mock attrition prediction for demo.');

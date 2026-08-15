@@ -33,7 +33,9 @@ const EmailApplications = () => {
 
   const checkStatus = async () => {
     try {
-      const res = await fetch(`${API}/status`);
+      const res = await fetch(`${API}/status`, {
+        headers: { 'x-auth-token': localStorage.getItem('token') }
+      });
       const data = await res.json();
       setStatus(data);
       if (data.connected) fetchEmails();
@@ -43,7 +45,9 @@ const EmailApplications = () => {
   const fetchEmails = async () => {
     setLoading(true); setError('');
     try {
-      const res = await fetch(`${API}/fetch?limit=${limit}`);
+      const res = await fetch(`${API}/fetch?limit=${limit}`, {
+        headers: { 'x-auth-token': localStorage.getItem('token') }
+      });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setEmails(data.emails || []);

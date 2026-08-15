@@ -54,9 +54,19 @@ def parse_resume():
         return jsonify({"error": "No file uploaded"}), 400
         
     file = request.files['file']
+    if not file.filename.lower().endswith('.pdf'):
+        return jsonify({"error": "Invalid file type. Only PDF files are supported."}), 400
+        
     required_skills_str = request.form.get('requiredSkills', '')
     
-    file_path = f"temp_{file.filename}"
+    from werkzeug.utils import secure_filename
+    import uuid
+    
+    safe_filename = secure_filename(file.filename)
+    if not safe_filename:
+        safe_filename = "resume.pdf"
+        
+    file_path = f"temp_{uuid.uuid4().hex}_{safe_filename}"
     file.save(file_path)
     
     text = parse_pdf(file_path)

@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const auth = require('../middleware/authMiddleware');
+const checkRole = require('../middleware/roleMiddleware');
 const multer = require('multer');
 const axios = require('axios');
 const FormData = require('form-data');
@@ -7,9 +9,24 @@ const fs = require('fs');
 const Resume = require('../models/Resume');
 const Job = require('../models/Job');
 
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ 
+  dest: 'uploads/',
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedMimeTypes = [
+      'application/pdf', 
+      'application/msword', 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    if (allowedMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only PDF and Word documents are allowed.'));
+    }
+  }
+});
 
-router.post('/upload', upload.single('resume'), async (req, res) => {
+router.post('/upload', auth, upload.single('resume'), async (req, res) => {
   try {
     const { candidateName, email, phone, jobId } = req.body;
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
@@ -60,7 +77,7 @@ router.post('/upload', upload.single('resume'), async (req, res) => {
   }
 });
 
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
     const resumes = await Resume.find().sort({ matchScore: -1 });
     res.json(resumes);
@@ -69,7 +86,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.patch('/:id/status', async (req, res) => {
+router.patch('/:id/status', auth, checkRole(['HR', 'Admin']), async (req, res) => {
   try {
     const { status } = req.body;
     const resume = await Resume.findByIdAndUpdate(req.params.id, { status }, { new: true });
