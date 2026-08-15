@@ -10,7 +10,8 @@ router.post('/predict-attrition', auth, checkRole(['HR', 'Admin']), async (req, 
     const employeeData = req.body;
     
     // Call ML Service attrition API
-    const response = await axios.post('http://127.0.0.1:5001/predict-attrition', employeeData);
+    const mlApiUrl = process.env.ML_API_URL || 'http://127.0.0.1:5001';
+    const response = await axios.post(`${mlApiUrl}/predict-attrition`, employeeData);
     
     res.json(response.data);
   } catch (error) {
@@ -23,7 +24,8 @@ router.post('/chatbot', auth, async (req, res) => {
   try {
     const { question } = req.body;
     
-    const response = await axios.post('http://127.0.0.1:5001/chatbot', { question });
+    const mlApiUrl = process.env.ML_API_URL || 'http://127.0.0.1:5001';
+    const response = await axios.post(`${mlApiUrl}/chatbot`, { question });
     
     res.json(response.data);
   } catch (error) {

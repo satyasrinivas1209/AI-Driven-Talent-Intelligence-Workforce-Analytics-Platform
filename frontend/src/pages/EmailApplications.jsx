@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Mail, RefreshCw, Link2, CheckCircle, AlertCircle, Search, Download, ChevronUp, ChevronDown } from 'lucide-react';
 
-const API = 'http://localhost:5000/api/email';
+const API = `${import.meta.env.VITE_API_URL}/email`;
 
 const StatusBadge = ({ score }) => {
   const color = score >= 70 ? '#10b981' : score >= 40 ? '#f59e0b' : '#ef4444';

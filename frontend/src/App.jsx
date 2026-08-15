@@ -8,6 +8,7 @@ import AttritionPred from './pages/AttritionPred';
 import Login from './pages/Login';
 import Topbar from './components/Topbar';
 import EmailApplications from './pages/EmailApplications';
+import NotFound from './pages/NotFound';
 
 function App() {
   const token = localStorage.getItem('token');
@@ -27,6 +28,7 @@ function App() {
               <Route path="/candidates" element={isLoggedIn ? <Candidates /> : <Navigate to="/login" />} />
               <Route path="/attrition" element={isLoggedIn ? <AttritionPred /> : <Navigate to="/login" />} />
               <Route path="/email-applications" element={isLoggedIn ? <EmailApplications /> : <Navigate to="/login" />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
         </div>

@@ -48,7 +48,8 @@ router.post('/upload', auth, upload.single('resume'), async (req, res) => {
 
     let skills = [], experience = 'Fresher', education = 'N/A', matchScore = 0;
     try {
-      const mlResponse = await axios.post('http://127.0.0.1:5001/parse', form, {
+      const mlApiUrl = process.env.ML_API_URL || 'http://127.0.0.1:5001';
+      const mlResponse = await axios.post(`${mlApiUrl}/parse`, form, {
         headers: { ...form.getHeaders() },
       });
       ({ skills, experience, education, matchScore } = mlResponse.data);
@@ -67,13 +68,14 @@ router.post('/upload', auth, upload.single('resume'), async (req, res) => {
       matchScore: matchScore || 0,
     });
 
-    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-
     res.json({ message: 'Resume uploaded successfully', resume });
   } catch (error) {
     console.error(error);
-    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     res.status(500).json({ error: 'Error parsing resume' });
+  } finally {
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
   }
 });
 

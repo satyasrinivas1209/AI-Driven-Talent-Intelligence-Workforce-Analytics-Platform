@@ -38,10 +38,7 @@ const Sidebar = () => {
           <Mail size={20} /> Email Applications
         </Link>
 
-        <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '2.5rem 0 1.5rem', paddingLeft: '1rem' }}>System</p>
-        <Link to="/settings" className={`nav-link ${location.pathname === '/settings' ? 'active' : ''}`}>
-          <Settings size={20} /> Settings
-        </Link>
+
       </div>
 
       <div style={{ marginTop: 'auto', borderTop: '1px solid #f1f5f9', paddingTop: '1.5rem' }}>

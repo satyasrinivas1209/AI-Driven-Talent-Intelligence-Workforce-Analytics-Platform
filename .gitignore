@@ -1,9 +1,35 @@
+# Node.js
 node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
 venv/
 .venv/
-.DS_Store
-*.log
-.env
+env/
+.env/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Machine Learning generated models
+ml_service/attrition_model.pkl
+
+# Build output
 dist/
 build/
+out/
+coverage/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Project Specific
 backend/config/gmail_tokens.json
+backend/uploads/
