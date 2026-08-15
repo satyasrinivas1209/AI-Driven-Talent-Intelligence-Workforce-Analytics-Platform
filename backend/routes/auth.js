@@ -16,7 +16,8 @@ router.post('/register', async (req, res) => {
     user = await User.create({ name, email, password: hashedPassword, role });
 
     const payload = { user: { id: user._id, role: user.role } };
-    const token = jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
+    if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is not defined in environment variables');
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     res.json({ token, user: { id: user._id, name, email, role } });
   } catch (err) {
@@ -35,7 +36,8 @@ router.post('/login', async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: 'Invalid Credentials' });
 
     const payload = { user: { id: user._id, role: user.role } };
-    const token = jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
+    if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is not defined in environment variables');
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     res.json({ token, user: { id: user._id, name: user.name, email, role: user.role } });
   } catch (err) {

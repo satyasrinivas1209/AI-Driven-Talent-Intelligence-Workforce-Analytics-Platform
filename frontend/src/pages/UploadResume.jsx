@@ -27,7 +27,10 @@ const UploadResume = () => {
     try {
       // Backend handles forwarding to ML API
       const res = await axios.post('http://localhost:5000/api/resume/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 
+          'Content-Type': 'multipart/form-data',
+          'x-auth-token': localStorage.getItem('token')
+        }
       });
       setResult(res.data.resume);
       setFile(null);

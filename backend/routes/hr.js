@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+const auth = require('../middleware/authMiddleware');
+const checkRole = require('../middleware/roleMiddleware');
 
 // Route to Predict Attrition
-router.post('/predict-attrition', async (req, res) => {
+router.post('/predict-attrition', auth, checkRole(['HR', 'Admin']), async (req, res) => {
   try {
     const employeeData = req.body;
     
@@ -17,7 +19,7 @@ router.post('/predict-attrition', async (req, res) => {
 });
 
 // Route for NLP Chatbot
-router.post('/chatbot', async (req, res) => {
+router.post('/chatbot', auth, async (req, res) => {
   try {
     const { question } = req.body;
     

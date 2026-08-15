@@ -3,8 +3,8 @@ import axios from 'axios';
 import { User, Lock, ExternalLink } from 'lucide-react';
 
 const Login = () => {
-  const [email, setEmail] = useState('admin@talentai.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
@@ -17,9 +17,10 @@ const Login = () => {
       localStorage.setItem('user', JSON.stringify(res.data.user));
       window.location.href = '/';
     } catch (err) {
-      console.log('Login failed, using dummy token for demo purposes');
-      localStorage.setItem('token', 'dummy_jwt_token_for_demo');
-      window.location.href = '/';
+      console.error('Login failed', err);
+      alert('Login failed. Please check your credentials and try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -59,9 +60,6 @@ const Login = () => {
             {loading ? 'Authenticating...' : 'Sign In securely'}
           </button>
 
-          <p style={{ marginTop: '1rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-            Demo credentials pre-filled. If DB is offline, a proxy token will be issued.
-          </p>
         </form>
       </div>
     </div>

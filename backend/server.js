@@ -14,6 +14,12 @@ app.use('/api/email', require('./routes/email'));
 
 const { connectDB } = require('./config/db');
 
+// Ensure JWT_SECRET is configured
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL ERROR: JWT_SECRET is not defined in environment variables.');
+  process.exit(1);
+}
+
 // Sync Database & Start Server
 connectDB().then(() => {
   const PORT = process.env.PORT || 5000;
