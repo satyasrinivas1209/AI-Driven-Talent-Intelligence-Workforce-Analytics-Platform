@@ -10,8 +10,8 @@ const Dashboard = () => {
   const [stats, setStats] = useState({
     totalCandidates: 0,
     shortlisted: 0,
-    attritionRate: '12%',
-    predictions: 18
+    avgMatchScore: 0,
+    totalSkills: 0
   });
   
   const [matchScoreData, setMatchScoreData] = useState(null);
@@ -21,19 +21,22 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/resume`, {
-          headers: { 'x-auth-token': token }
-        });
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/resume`);
         
         const resumes = res.data;
         const total = resumes.length;
         const shortlisted = resumes.filter(r => r.status === 'Shortlisted').length;
+        const totalScore = resumes.reduce((acc, r) => acc + (r.matchScore || 0), 0);
+        const avgScore = total > 0 ? Math.round(totalScore / total) : 0;
+        
+        const extractedSkills = resumes.reduce((acc, r) => acc + (r.skills ? r.skills.length : 0), 0);
         
         setStats(prev => ({
           ...prev,
           totalCandidates: total,
-          shortlisted: shortlisted
+          shortlisted: shortlisted,
+          avgMatchScore: avgScore,
+          totalSkills: extractedSkills
         }));
 
         // Calculate Match Score Distribution
@@ -149,30 +152,30 @@ const Dashboard = () => {
         <div className="glass-card fade-in" style={{ animationDelay: '0.3s' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Predicted Attrition Rate</p>
-              <h2 style={{ fontSize: '2rem' }}>{stats.attritionRate}</h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Average Match Score</p>
+              <h2 style={{ fontSize: '2rem' }}>{stats.avgMatchScore}%</h2>
             </div>
             <div style={{ padding: '0.75rem', background: 'rgba(248, 81, 73, 0.1)', borderRadius: '12px' }}>
               <TrendingDown color="var(--danger-color)" size={24} />
             </div>
           </div>
           <div style={{ marginTop: '1rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-            (Mock Data)
+            Across all roles
           </div>
         </div>
 
         <div className="glass-card fade-in" style={{ animationDelay: '0.4s' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>ML Predictions Run</p>
-              <h2 style={{ fontSize: '2rem' }}>{stats.predictions}k</h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Total Skills Extracted</p>
+              <h2 style={{ fontSize: '2rem' }}>{stats.totalSkills}</h2>
             </div>
             <div style={{ padding: '0.75rem', background: 'rgba(210, 153, 34, 0.1)', borderRadius: '12px' }}>
               <Zap color="#d29922" size={24} />
             </div>
           </div>
           <div style={{ marginTop: '1rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-            (Mock Data)
+            From parsed resumes
           </div>
         </div>
       </div>

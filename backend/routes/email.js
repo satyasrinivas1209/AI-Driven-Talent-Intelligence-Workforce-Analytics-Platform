@@ -8,9 +8,10 @@ const FormData = require('form-data');
 const auth = require('../middleware/authMiddleware');
 const User = require('../models/User');
 const { encrypt, decrypt } = require('../utils/encryption');
+const jwt = require('jsonwebtoken');
 
-// ─── Gmail OAuth2 Client ──────────────────────────────────────────────────────
-const oauth2Client = new google.auth.OAuth2(
+// ─── Gmail OAuth2 Client Factory ──────────────────────────────────────────────
+const createOAuth2Client = () => new google.auth.OAuth2(
   process.env.GMAIL_CLIENT_ID,
   process.env.GMAIL_CLIENT_SECRET,
   process.env.GMAIL_REDIRECT_URI || 'http://localhost:5000/api/email/oauth2callback'
@@ -18,11 +19,23 @@ const oauth2Client = new google.auth.OAuth2(
 
 // ─── Step 1: Generate Auth URL ────────────────────────────────────────────────
 router.get('/auth', auth, (req, res) => {
+  const oauth2Client = createOAuth2Client();
+  if (!process.env.JWT_SECRET) {
+    return res.status(500).json({ error: 'JWT_SECRET is not configured' });
+  }
+
+  // Sign the state parameter to prevent CSRF and account hijacking
+  const stateToken = jwt.sign(
+    { id: req.user.id },
+    process.env.JWT_SECRET,
+    { expiresIn: '15m' } // Short-lived token
+  );
+
   const url = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: ['https://www.googleapis.com/auth/gmail.readonly'],
     prompt: 'select_account',
-    state: req.user.id
+    state: stateToken
   });
   res.redirect(url);
 });
@@ -31,15 +44,27 @@ router.get('/auth', auth, (req, res) => {
 router.get('/oauth2callback', async (req, res) => {
   const { code, state } = req.query;
   try {
+    if (!state) {
+      return res.status(400).json({ error: 'Missing state parameter' });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET is not configured');
+    }
+
+    // Verify the state token to get the user ID
+    const decodedState = jwt.verify(state, process.env.JWT_SECRET);
+    const userId = decodedState.id;
+
+    const oauth2Client = createOAuth2Client();
     const { tokens } = await oauth2Client.getToken(code);
     
-    if (state) {
-      const encrypted = encrypt(JSON.stringify(tokens));
-      await User.findByIdAndUpdate(state, {
-        gmailTokens: encrypted.encryptedData,
-        gmailTokensIV: encrypted.iv
-      });
-    }
+    const encrypted = encrypt(JSON.stringify(tokens));
+    await User.findByIdAndUpdate(userId, {
+      gmailTokens: encrypted.encryptedData,
+      gmailTokensIV: encrypted.iv,
+      gmailTokensAuthTag: encrypted.authTag
+    });
 
     res.redirect('http://localhost:5173/email-applications?connected=true');
   } catch (err) {
@@ -52,23 +77,24 @@ router.get('/oauth2callback', async (req, res) => {
 const loadTokens = async (userId) => {
   try {
     const user = await User.findById(userId);
-    if (user && user.gmailTokens && user.gmailTokensIV) {
-      const decrypted = decrypt(user.gmailTokens, user.gmailTokensIV);
+    if (user && user.gmailTokens && user.gmailTokensIV && user.gmailTokensAuthTag) {
+      const decrypted = decrypt(user.gmailTokens, user.gmailTokensIV, user.gmailTokensAuthTag);
       const tokens = JSON.parse(decrypted);
+      const oauth2Client = createOAuth2Client();
       oauth2Client.setCredentials(tokens);
-      return true;
+      return oauth2Client;
     }
   } catch (err) {
     console.error('Error loading tokens:', err);
   }
-  return false;
+  return null;
 };
 
 // ─── Step 3: Fetch Emails with Attachments ────────────────────────────────────
 router.get('/fetch', auth, async (req, res) => {
   try {
-    const isConnected = await loadTokens(req.user.id);
-    if (!isConnected) {
+    const oauth2Client = await loadTokens(req.user.id);
+    if (!oauth2Client) {
       return res.status(401).json({
         error: 'Not authenticated',
         authUrl: `http://localhost:5000/api/email/auth`,
@@ -149,7 +175,8 @@ router.get('/fetch', auth, async (req, res) => {
 
             // Decode base64 attachment
             const buffer = Buffer.from(attRes.data.data, 'base64');
-            tmpPath = path.join(__dirname, `../uploads/tmp_${msg.id}_${att.filename}`);
+            const safeFilename = path.basename(att.filename);
+            tmpPath = path.join(__dirname, `../uploads/tmp_${msg.id}_${safeFilename}`);
             fs.writeFileSync(tmpPath, buffer);
 
             // Send to ML service for parsing
@@ -159,8 +186,12 @@ router.get('/fetch', auth, async (req, res) => {
             form.append('requiredSkills', '');
 
             const mlApiUrl = process.env.ML_API_URL || 'http://127.0.0.1:5001';
+            const mlApiKey = process.env.ML_API_KEY || 'default-dev-key';
             const mlRes = await axios.post(`${mlApiUrl}/parse`, form, {
-              headers: { ...form.getHeaders() },
+              headers: { 
+                ...form.getHeaders(),
+                'x-api-key': mlApiKey
+              },
               timeout: 15000,
             });
 
@@ -187,7 +218,8 @@ router.get('/fetch', auth, async (req, res) => {
 
 // ─── Step 4: Check connection status ─────────────────────────────────────────
 router.get('/status', auth, async (req, res) => {
-  const connected = await loadTokens(req.user.id);
+  const oauth2Client = await loadTokens(req.user.id);
+  const connected = !!oauth2Client;
   res.json({
     connected,
     authUrl: connected ? null : `http://localhost:5000/api/email/auth`,

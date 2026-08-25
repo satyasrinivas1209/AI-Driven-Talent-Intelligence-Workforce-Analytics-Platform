@@ -11,7 +11,10 @@ router.post('/predict-attrition', auth, checkRole(['HR', 'Admin']), async (req, 
     
     // Call ML Service attrition API
     const mlApiUrl = process.env.ML_API_URL || 'http://127.0.0.1:5001';
-    const response = await axios.post(`${mlApiUrl}/predict-attrition`, employeeData);
+    const mlApiKey = process.env.ML_API_KEY || 'default-dev-key';
+    const response = await axios.post(`${mlApiUrl}/predict-attrition`, employeeData, {
+      headers: { 'x-api-key': mlApiKey }
+    });
     
     res.json(response.data);
   } catch (error) {
@@ -25,7 +28,10 @@ router.post('/chatbot', auth, async (req, res) => {
     const { question } = req.body;
     
     const mlApiUrl = process.env.ML_API_URL || 'http://127.0.0.1:5001';
-    const response = await axios.post(`${mlApiUrl}/chatbot`, { question });
+    const mlApiKey = process.env.ML_API_KEY || 'default-dev-key';
+    const response = await axios.post(`${mlApiUrl}/chatbot`, { question }, {
+      headers: { 'x-api-key': mlApiKey }
+    });
     
     res.json(response.data);
   } catch (error) {

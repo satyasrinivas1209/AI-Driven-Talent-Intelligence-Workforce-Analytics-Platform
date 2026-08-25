@@ -12,14 +12,13 @@ const UploadResume = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
 
 
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/jobs`, {
-          headers: { 'x-auth-token': localStorage.getItem('token') }
-        });
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/jobs`);
         setJobs(res.data);
         if (res.data.length > 0) {
           setJobId(res.data[0]._id);
@@ -49,8 +48,7 @@ const UploadResume = () => {
       // Backend handles forwarding to ML API
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/resume/upload`, formData, {
         headers: { 
-          'Content-Type': 'multipart/form-data',
-          'x-auth-token': localStorage.getItem('token')
+          'Content-Type': 'multipart/form-data'
         }
       });
       setResult(res.data.resume);
@@ -105,14 +103,23 @@ const UploadResume = () => {
 
             <div 
               style={{
-                border: '2px dashed var(--glass-border)',
+                border: isDragging ? '2px dashed var(--accent-color)' : '2px dashed var(--glass-border)',
                 borderRadius: '8px',
                 padding: '2rem',
                 textAlign: 'center',
                 marginBottom: '1.5rem',
-                background: file ? 'rgba(88, 166, 255, 0.05)' : 'transparent',
+                background: isDragging ? 'rgba(88, 166, 255, 0.1)' : file ? 'rgba(88, 166, 255, 0.05)' : 'transparent',
                 transition: 'all 0.2s',
                 cursor: 'pointer'
+              }}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragging(false);
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                  setFile(e.dataTransfer.files[0]);
+                }
               }}
               onClick={() => document.getElementById('fileUpload').click()}
             >

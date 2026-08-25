@@ -13,15 +13,10 @@ const upload = multer({
   dest: 'uploads/',
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
-    const allowedMimeTypes = [
-      'application/pdf', 
-      'application/msword', 
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ];
-    if (allowedMimeTypes.includes(file.mimetype)) {
+    if (file.mimetype === 'application/pdf') {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only PDF and Word documents are allowed.'));
+      cb(new Error('Invalid file type. Only PDF documents are allowed.'));
     }
   }
 });
@@ -54,7 +49,8 @@ router.post('/upload', auth, upload.single('resume'), async (req, res) => {
       });
       ({ skills, experience, education, matchScore } = mlResponse.data);
     } catch (mlErr) {
-      console.warn('ML service unavailable, saving with defaults.');
+      console.error('ML service error:', mlErr);
+      return res.status(500).json({ error: 'ML service failed to parse the resume. Please ensure the document is a valid PDF and the ML service is running.' });
     }
 
     const resume = await Resume.create({

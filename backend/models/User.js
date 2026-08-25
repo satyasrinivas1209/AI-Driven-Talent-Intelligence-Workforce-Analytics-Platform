@@ -6,7 +6,8 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, enum: ['Admin', 'HR'], default: 'HR' },
   gmailTokens: { type: String, default: null },
-  gmailTokensIV: { type: String, default: null }
+  gmailTokensIV: { type: String, default: null },
+  gmailTokensAuthTag: { type: String, default: null }
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', UserSchema);

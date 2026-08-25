@@ -33,3 +33,5 @@ Thumbs.db
 # Project Specific
 backend/config/gmail_tokens.json
 backend/uploads/
+backend/output.txt
+backend/test_mongo.txt

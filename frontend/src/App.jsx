@@ -10,10 +10,26 @@ import Topbar from './components/Topbar';
 import EmailApplications from './pages/EmailApplications';
 import Jobs from './pages/Jobs';
 import NotFound from './pages/NotFound';
+import axios from 'axios';
+
+axios.defaults.withCredentials = true;
+
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('user');
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 function App() {
-  const token = localStorage.getItem('token');
-  const isLoggedIn = !!token;
+  const user = localStorage.getItem('user');
+  const isLoggedIn = !!user;
 
   return (
     <Router>

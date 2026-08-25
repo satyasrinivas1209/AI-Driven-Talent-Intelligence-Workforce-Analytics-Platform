@@ -4,9 +4,14 @@ import { LayoutDashboard, Users, UserPlus, TrendingDown, LogOut, Settings, BarCh
 const Sidebar = () => {
   const location = useLocation();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (window.confirm("Are you sure you want to log out?")) {
-      localStorage.removeItem('token');
+      try {
+        await fetch(`${import.meta.env.VITE_API_URL}/auth/logout`, { method: 'POST' });
+      } catch (err) {
+        console.error('Logout error:', err);
+      }
+      localStorage.removeItem('user');
       window.location.href = '/login';
     }
   };

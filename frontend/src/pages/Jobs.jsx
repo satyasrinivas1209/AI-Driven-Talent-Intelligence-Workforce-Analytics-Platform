@@ -5,6 +5,7 @@ import { Briefcase, Plus, Edit2, Trash2, CheckCircle, XCircle } from 'lucide-rea
 const Jobs = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
   
@@ -17,14 +18,13 @@ const Jobs = () => {
 
   const fetchJobs = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/jobs`, {
-        headers: { 'x-auth-token': token }
-      });
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/jobs`);
       setJobs(res.data);
+      setError(null);
       setLoading(false);
     } catch (err) {
       console.error('Failed to fetch jobs', err);
+      setError('Failed to load job postings. Please try again later.');
       setLoading(false);
     }
   };
@@ -56,22 +56,15 @@ const Jobs = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
-    
     const payload = {
       ...formData,
       requiredSkills: formData.requiredSkills.split(',').map(s => s.trim()).filter(s => s)
     };
-
     try {
       if (editingJob) {
-        await axios.put(`${import.meta.env.VITE_API_URL}/jobs/${editingJob._id}`, payload, {
-          headers: { 'x-auth-token': token }
-        });
+        await axios.put(`${import.meta.env.VITE_API_URL}/jobs/${editingJob._id}`, payload);
       } else {
-        await axios.post(`${import.meta.env.VITE_API_URL}/jobs`, payload, {
-          headers: { 'x-auth-token': token }
-        });
+        await axios.post(`${import.meta.env.VITE_API_URL}/jobs`, payload);
       }
       fetchJobs();
       handleCloseModal();
@@ -83,10 +76,7 @@ const Jobs = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this job posting?')) return;
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${import.meta.env.VITE_API_URL}/jobs/${id}`, {
-        headers: { 'x-auth-token': token }
-      });
+      await axios.delete(`${import.meta.env.VITE_API_URL}/jobs/${id}`);
       fetchJobs();
     } catch (err) {
       alert('Failed to delete job posting');
@@ -112,8 +102,14 @@ const Jobs = () => {
         </button>
       </div>
 
-      <div style={{ background: 'var(--bg-color-card)', borderRadius: '12px', border: '1px solid var(--glass-border)', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+      {error ? (
+        <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--danger-color)', borderRadius: '12px', padding: '1rem', color: 'var(--danger-color)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <XCircle size={20} />
+          <span>{error}</span>
+        </div>
+      ) : (
+        <div style={{ background: 'var(--bg-color-card)', borderRadius: '12px', border: '1px solid var(--glass-border)', overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid var(--glass-border)' }}>
               <th style={{ padding: '1rem', fontWeight: 600 }}>Title</th>
@@ -154,6 +150,7 @@ const Jobs = () => {
           </tbody>
         </table>
       </div>
+      )}
 
       {isModalOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>

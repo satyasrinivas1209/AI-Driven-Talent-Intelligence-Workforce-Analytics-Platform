@@ -33,9 +33,7 @@ const EmailApplications = () => {
 
   const checkStatus = async () => {
     try {
-      const res = await fetch(`${API}/status`, {
-        headers: { 'x-auth-token': localStorage.getItem('token') }
-      });
+      const res = await fetch(`${API}/status`);
       const data = await res.json();
       setStatus(data);
       if (data.connected) fetchEmails();
@@ -45,9 +43,7 @@ const EmailApplications = () => {
   const fetchEmails = async () => {
     setLoading(true); setError('');
     try {
-      const res = await fetch(`${API}/fetch?limit=${limit}`, {
-        headers: { 'x-auth-token': localStorage.getItem('token') }
-      });
+      const res = await fetch(`${API}/fetch?limit=${limit}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setEmails(data.emails || []);
@@ -104,26 +100,26 @@ const EmailApplications = () => {
   };
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'Inter, sans-serif', color: '#1e293b' }}>
+    <div style={{ padding: '2rem 4rem', fontFamily: 'Inter, sans-serif', color: 'var(--text-primary)' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
         <div>
           <h1 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Mail size={28} style={{ color: '#4f46e5' }} /> Email Applications
+            <Mail size={28} style={{ color: 'var(--accent-color)' }} /> Email Applications
           </h1>
-          <p style={{ color: '#64748b', marginTop: '0.25rem', fontSize: '0.9rem' }}>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem', fontSize: '0.9rem' }}>
             Fetch resumes from Gmail and rank candidates automatically
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
           {status.connected ? (
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#10b981', fontWeight: 600, fontSize: '0.85rem' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--success-color)', fontWeight: 600, fontSize: '0.85rem' }}>
               <CheckCircle size={16} /> Gmail Connected
             </span>
           ) : (
             <a href={status.authUrl} style={{
               display: 'flex', alignItems: 'center', gap: '0.5rem',
-              background: '#4f46e5', color: 'white', padding: '0.6rem 1.2rem',
+              background: 'var(--accent-color)', color: 'white', padding: '0.6rem 1.2rem',
               borderRadius: 10, textDecoration: 'none', fontWeight: 600, fontSize: '0.85rem',
             }}>
               <Link2 size={16} /> Connect Gmail
@@ -132,8 +128,8 @@ const EmailApplications = () => {
           {status.connected && (
             <button onClick={fetchEmails} disabled={loading} style={{
               display: 'flex', alignItems: 'center', gap: '0.5rem',
-              background: '#f1f5f9', border: 'none', padding: '0.6rem 1.2rem',
-              borderRadius: 10, cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem',
+              background: 'var(--bg-color-card)', border: '1px solid var(--glass-border)', padding: '0.6rem 1.2rem',
+              borderRadius: 10, cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)'
             }}>
               <RefreshCw size={16} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
               {loading ? 'Fetching...' : 'Refresh'}
@@ -142,7 +138,7 @@ const EmailApplications = () => {
           {emails.length > 0 && (
             <button onClick={exportCSV} style={{
               display: 'flex', alignItems: 'center', gap: '0.5rem',
-              background: '#10b981', color: 'white', border: 'none',
+              background: 'var(--success-color)', color: 'white', border: 'none',
               padding: '0.6rem 1.2rem', borderRadius: 10, cursor: 'pointer',
               fontWeight: 600, fontSize: '0.85rem',
             }}>
@@ -154,21 +150,21 @@ const EmailApplications = () => {
 
       {/* Error */}
       {error && (
-        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '1rem', marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center', color: '#ef4444' }}>
+        <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--danger-color)', borderRadius: 10, padding: '1rem', marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center', color: 'var(--danger-color)' }}>
           <AlertCircle size={18} /> {error}
         </div>
       )}
 
       {/* Not connected */}
       {!status.connected && !error && (
-        <div style={{ textAlign: 'center', padding: '5rem 2rem', background: '#f8fafc', borderRadius: 16, border: '2px dashed #e2e8f0' }}>
-          <Mail size={56} style={{ color: '#cbd5e1', marginBottom: '1rem' }} />
-          <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#475569' }}>Connect Your Gmail Account</h3>
-          <p style={{ color: '#94a3b8', marginBottom: '1.5rem', maxWidth: 400, margin: '0.5rem auto 1.5rem' }}>
+        <div style={{ textAlign: 'center', padding: '5rem 2rem', background: 'var(--bg-color-card)', borderRadius: 16, border: '2px dashed var(--glass-border)' }}>
+          <Mail size={56} style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }} />
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>Connect Your Gmail Account</h3>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', maxWidth: 400, margin: '0.5rem auto 1.5rem' }}>
             Link your Gmail to automatically fetch job application emails and AI-parse attached resumes.
           </p>
           <a href={status.authUrl} style={{
-            background: '#4f46e5', color: 'white', padding: '0.75rem 2rem',
+            background: 'var(--accent-color)', color: 'white', padding: '0.75rem 2rem',
             borderRadius: 10, textDecoration: 'none', fontWeight: 700,
             display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
           }}>
@@ -181,24 +177,24 @@ const EmailApplications = () => {
       {status.connected && (
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', alignItems: 'center' }}>
           <div style={{ flex: 1, position: 'relative' }}>
-            <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+            <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
             <input
               value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search by sender, subject or skills..."
               style={{
                 width: '100%', padding: '0.65rem 0.75rem 0.65rem 2.25rem',
-                borderRadius: 10, border: '1.5px solid #e2e8f0',
+                borderRadius: 10, border: '1.5px solid var(--glass-border)', background: 'var(--bg-color-card)', color: 'var(--text-primary)',
                 fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box',
               }}
             />
           </div>
           <select value={limit} onChange={e => { setLimit(+e.target.value); fetchEmails(); }}
-            style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: '0.9rem', cursor: 'pointer' }}>
+            style={{ padding: '0.65rem 1rem', borderRadius: 10, border: '1.5px solid var(--glass-border)', background: 'var(--bg-color-card)', color: 'var(--text-primary)', fontSize: '0.9rem', cursor: 'pointer' }}>
             <option value={10}>Last 10</option>
             <option value={20}>Last 20</option>
             <option value={50}>Last 50</option>
           </select>
-          <span style={{ color: '#64748b', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+          <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
             {filtered.length} result{filtered.length !== 1 ? 's' : ''}
           </span>
         </div>
@@ -206,11 +202,11 @@ const EmailApplications = () => {
 
       {/* Table */}
       {status.connected && emails.length > 0 && (
-        <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+        <div style={{ background: 'var(--bg-color-card)', borderRadius: 16, border: '1px solid var(--glass-border)', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
               <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                <tr style={{ background: 'rgba(0,0,0,0.02)', borderBottom: '1px solid var(--glass-border)' }}>
                   {[
                     { label: 'Sender', field: 'from' },
                     { label: 'Subject', field: 'subject' },
@@ -225,7 +221,7 @@ const EmailApplications = () => {
                       style={{
                         padding: '1rem 1.25rem', textAlign: 'left', fontWeight: 700,
                         fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em',
-                        color: '#475569', cursor: field ? 'pointer' : 'default',
+                        color: 'var(--text-secondary)', cursor: field ? 'pointer' : 'default',
                         userSelect: 'none', whiteSpace: 'nowrap',
                       }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -237,56 +233,56 @@ const EmailApplications = () => {
               </thead>
               <tbody>
                 {filtered.map((email, i) => (
-                  <tr key={email.id} style={{ borderBottom: '1px solid #f1f5f9', background: i % 2 === 0 ? 'white' : '#fafafa', transition: 'background 0.15s' }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#f0f4ff'}
-                    onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'white' : '#fafafa'}>
+                  <tr key={email.id} style={{ borderBottom: '1px solid var(--glass-border)', background: 'transparent', transition: 'background 0.15s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.02)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     <td style={{ padding: '1rem 1.25rem', maxWidth: 180 }}>
-                      <div style={{ fontWeight: 600, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {email.from?.replace(/<.*>/, '').trim() || 'Unknown'}
                       </div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {email.from?.match(/<(.+)>/)?.[1] || email.from}
                       </div>
                     </td>
                     <td style={{ padding: '1rem 1.25rem', maxWidth: 220 }}>
-                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#334155' }}>
+                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }}>
                         {email.subject || '(No Subject)'}
                       </div>
                     </td>
-                    <td style={{ padding: '1rem 1.25rem', whiteSpace: 'nowrap', color: '#64748b' }}>
+                    <td style={{ padding: '1rem 1.25rem', whiteSpace: 'nowrap', color: 'var(--text-secondary)' }}>
                       {email.date ? new Date(email.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
                     </td>
                     <td style={{ padding: '1rem 1.25rem', maxWidth: 200 }}>
                       {email.parsedResume?.skills?.length > 0 ? (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                           {email.parsedResume.skills.slice(0, 4).map(s => (
-                            <span key={s} style={{ background: '#ede9fe', color: '#6d28d9', padding: '2px 8px', borderRadius: 20, fontSize: '0.7rem', fontWeight: 600 }}>
+                            <span key={s} style={{ background: 'rgba(109, 40, 217, 0.1)', color: 'var(--accent-color)', padding: '2px 8px', borderRadius: 20, fontSize: '0.7rem', fontWeight: 600 }}>
                               {s}
                             </span>
                           ))}
                           {email.parsedResume.skills.length > 4 && (
-                            <span style={{ color: '#94a3b8', fontSize: '0.7rem' }}>+{email.parsedResume.skills.length - 4} more</span>
+                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>+{email.parsedResume.skills.length - 4} more</span>
                           )}
                         </div>
-                      ) : <span style={{ color: '#cbd5e1' }}>No resume parsed</span>}
+                      ) : <span style={{ color: 'var(--text-secondary)' }}>No resume parsed</span>}
                     </td>
-                    <td style={{ padding: '1rem 1.25rem', color: '#475569' }}>
-                      {email.parsedResume?.experience || <span style={{ color: '#cbd5e1' }}>N/A</span>}
+                    <td style={{ padding: '1rem 1.25rem', color: 'var(--text-secondary)' }}>
+                      {email.parsedResume?.experience || <span style={{ color: 'var(--text-secondary)' }}>N/A</span>}
                     </td>
-                    <td style={{ padding: '1rem 1.25rem', color: '#475569' }}>
-                      {email.parsedResume?.education || <span style={{ color: '#cbd5e1' }}>N/A</span>}
+                    <td style={{ padding: '1rem 1.25rem', color: 'var(--text-secondary)' }}>
+                      {email.parsedResume?.education || <span style={{ color: 'var(--text-secondary)' }}>N/A</span>}
                     </td>
                     <td style={{ padding: '1rem 1.25rem' }}>
                       {email.parsedResume?.matchScore != null
                         ? <StatusBadge score={email.parsedResume.matchScore} />
-                        : <span style={{ color: '#cbd5e1', fontSize: '0.8rem' }}>No attachment</span>}
+                        : <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>No attachment</span>}
                     </td>
                     <td style={{ padding: '1rem 1.25rem' }}>
                       {email.attachments?.length > 0
                         ? email.attachments.map(a => (
-                          <div key={a.attachmentId} style={{ fontSize: '0.75rem', color: '#4f46e5', fontWeight: 600 }}>📎 {a.filename}</div>
+                          <div key={a.attachmentId} style={{ fontSize: '0.75rem', color: 'var(--accent-color)', fontWeight: 600 }}>📎 {a.filename}</div>
                         ))
-                        : <span style={{ color: '#cbd5e1', fontSize: '0.75rem' }}>None</span>}
+                        : <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>None</span>}
                     </td>
                   </tr>
                 ))}
@@ -298,10 +294,10 @@ const EmailApplications = () => {
 
       {/* Empty state */}
       {status.connected && !loading && emails.length === 0 && !error && (
-        <div style={{ textAlign: 'center', padding: '4rem 2rem', background: '#f8fafc', borderRadius: 16, border: '2px dashed #e2e8f0' }}>
-          <Mail size={48} style={{ color: '#cbd5e1', marginBottom: '1rem' }} />
-          <h3 style={{ color: '#475569', fontWeight: 700 }}>No Application Emails Found</h3>
-          <p style={{ color: '#94a3b8' }}>No emails with resume attachments matching job application keywords were found.</p>
+        <div style={{ textAlign: 'center', padding: '4rem 2rem', background: 'var(--bg-color-card)', borderRadius: 16, border: '2px dashed var(--glass-border)' }}>
+          <Mail size={48} style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }} />
+          <h3 style={{ color: 'var(--text-primary)', fontWeight: 700 }}>No Application Emails Found</h3>
+          <p style={{ color: 'var(--text-secondary)' }}>No emails with resume attachments matching job application keywords were found.</p>
         </div>
       )}
 

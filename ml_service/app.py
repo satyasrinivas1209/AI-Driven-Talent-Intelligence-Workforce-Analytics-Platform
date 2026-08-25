@@ -1,6 +1,7 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort
 from flask_cors import CORS
+from functools import wraps
 import PyPDF2
 import textwrap
 import re
@@ -12,7 +13,19 @@ from sklearn.ensemble import RandomForestClassifier
 import joblib
 
 app = Flask(__name__)
+# Restrict CORS to only the Node.js backend if possible, or require API key
 CORS(app)
+
+# Decorator to require API key
+def require_api_key(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        api_key = request.headers.get('x-api-key')
+        expected_key = os.environ.get('ML_API_KEY', 'default-dev-key')
+        if not api_key or api_key != expected_key:
+            abort(401, description="Unauthorized: Invalid or missing API Key")
+        return f(*args, **kwargs)
+    return decorated
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'attrition_model.pkl')
 
@@ -55,6 +68,7 @@ def extract_education(text):
     return "Not Found"
 
 @app.route('/parse', methods=['POST'])
+@require_api_key
 def parse_resume():
     if 'file' not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
@@ -114,6 +128,7 @@ def parse_resume():
     })
 
 @app.route('/predict-attrition', methods=['POST'])
+@require_api_key
 def predict_attrition():
     req_data = request.json
     try:
@@ -136,6 +151,7 @@ def predict_attrition():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/chatbot', methods=['POST'])
+@require_api_key
 def chatbot():
     question = request.json.get('question', '').lower()
     # Simple rules based chatbot
@@ -151,4 +167,4 @@ def chatbot():
     return jsonify({"answer": reply})
 
 if __name__ == '__main__':
-    app.run(port=5001, debug=True)
+    app.run(port=5001, debug=False)

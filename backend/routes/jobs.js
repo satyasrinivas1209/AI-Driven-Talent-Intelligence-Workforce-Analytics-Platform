@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/authMiddleware');
+const checkRole = require('../middleware/roleMiddleware');
 const Job = require('../models/Job');
 
 // Helper to seed jobs if none exist
@@ -47,7 +48,7 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-router.post('/', auth, async (req, res) => {
+router.post('/', [auth, checkRole(['Admin'])], async (req, res) => {
   try {
     const { title, description, requiredSkills, isActive } = req.body;
     const newJob = new Job({ title, description, requiredSkills, isActive });
@@ -59,7 +60,7 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-router.put('/:id', auth, async (req, res) => {
+router.put('/:id', [auth, checkRole(['Admin'])], async (req, res) => {
   try {
     const { title, description, requiredSkills, isActive } = req.body;
     const updatedJob = await Job.findByIdAndUpdate(
@@ -74,7 +75,7 @@ router.put('/:id', auth, async (req, res) => {
   }
 });
 
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', [auth, checkRole(['Admin'])], async (req, res) => {
   try {
     await Job.findByIdAndDelete(req.params.id);
     res.json({ msg: 'Job deleted' });

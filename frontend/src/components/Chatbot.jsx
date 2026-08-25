@@ -15,8 +15,9 @@ const Chatbot = () => {
     setInput('');
     
     try {
-      // Connect to Python ML Chatbot
-      const res = await axios.post(`${import.meta.env.VITE_ML_API_URL}/chatbot`, { question: userMsg });
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/hr/chatbot`, 
+        { question: userMsg }
+      );
       setMessages(prev => [...prev, { text: res.data.answer, sender: 'bot' }]);
     } catch (err) {
       setMessages(prev => [...prev, { text: 'Sorry, the HR bot service is currently down.', sender: 'bot' }]);

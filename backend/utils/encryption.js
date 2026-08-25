@@ -1,24 +1,30 @@
 const crypto = require('crypto');
 
-// Use JWT_SECRET to derive a 32-byte key
+// Use ENCRYPTION_KEY to derive a 32-byte key
 const getSecretKey = () => {
-  if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is required');
-  return crypto.createHash('sha256').update(String(process.env.JWT_SECRET)).digest('base64').substring(0, 32);
+  if (!process.env.ENCRYPTION_KEY) throw new Error('ENCRYPTION_KEY is required');
+  // Use a raw 32-byte hash buffer
+  return crypto.createHash('sha256').update(String(process.env.ENCRYPTION_KEY)).digest();
 };
 
 const encrypt = (text) => {
   const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(getSecretKey()), iv);
+  const key = getSecretKey();
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
+  const authTag = cipher.getAuthTag().toString('hex');
   return {
     iv: iv.toString('hex'),
-    encryptedData: encrypted
+    encryptedData: encrypted,
+    authTag
   };
 };
 
-const decrypt = (encryptedData, iv) => {
-  const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(getSecretKey()), Buffer.from(iv, 'hex'));
+const decrypt = (encryptedData, iv, authTag) => {
+  const key = getSecretKey();
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(iv, 'hex'));
+  decipher.setAuthTag(Buffer.from(authTag, 'hex'));
   let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
   decrypted += decipher.final('utf8');
   return decrypted;
